@@ -1,0 +1,4 @@
+mqtt:
+  server: tcp://121.36.70.254:1883
+  mode: 0
+  clientId: honeypot

@@ -3,15 +3,23 @@ package redis
 import (
 	"bufio"
 	"fmt"
+	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
 	"honeypot/utils/try"
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 var kvData map[string]string
+
+var wg sync.WaitGroup
+
+var poolX *ants.Pool
+
+var stop = false
 
 func Start(addr string) {
 	kvData = make(map[string]string)
@@ -21,7 +29,7 @@ func Start(addr string) {
 
 	defer netListen.Close()
 
-	wg, poolX := pool.New(1)
+	wg, poolX = pool.New(1)
 	defer poolX.Release()
 
 	for {
@@ -35,21 +43,30 @@ func Start(addr string) {
 				fmt.Printf("Redis 连接失败， error is %v\n", err)
 			}
 
-			//arr := strings.Split(conn.RemoteAddr().String(),":")
-
 			fmt.Printf("Redis 连接成功！")
 
 			go handleConnection(conn)
 
 			wg.Done()
 		})
+		if stop {
+			break
+		}
 	}
+}
+
+func Stop() {
+	stop = true
+	fmt.Printf("Redis蜜罐关闭")
 }
 
 //处理 Redis 连接
 func handleConnection(conn net.Conn) {
 
 	for {
+		if stop {
+			break
+		}
 		str := parseRESP(conn)
 
 		switch value := str.(type) {

@@ -10,6 +10,7 @@ import (
 	"honeypot/core/pool"
 	"honeypot/core/protocol/mysql"
 	"honeypot/core/protocol/redis"
+	"honeypot/core/status"
 	"sync"
 )
 
@@ -18,8 +19,6 @@ var Client MQTT.Client
 var wg sync.WaitGroup
 
 var poolX *ants.Pool
-
-var redisDone = make(chan bool)
 
 var connectHandler MQTT.OnConnectHandler = func(client MQTT.Client) {
 	fmt.Printf("Connect succeed!\n")
@@ -38,13 +37,25 @@ var msgHandler MQTT.MessageHandler = func(client MQTT.Client, message MQTT.Messa
 	}
 	if order.Target == "redis" {
 		if order.Move == "open" {
-			go redis.Start("127.0.0.1:6378", redisDone)
+			if !status.GetRedisStatus() {
+				go redis.Start("127.0.0.1:6378", status.GetRedisDone())
+				status.SetRedisStatus(true)
+			}
 		} else if order.Move == "stop" {
-			redisDone <- true
+			if status.GetRedisStatus() {
+				status.SetRedisDone(true)
+				status.SetRedisStatus(false)
+			}
 		}
 	} else if order.Target == "mysql" {
 		if order.Move == "open" {
-			go mysql.Start("0.0.0.0:3308", "/etc/passwd,/etc/group")
+			if !status.GetMysqlStatus() {
+				go mysql.Start("0.0.0.0:3308", "/etc/passwd,/etc/group")
+			}
+		} else if order.Move == "stop" {
+			if status.GetMysqlStatus() {
+
+			}
 		}
 	}
 }

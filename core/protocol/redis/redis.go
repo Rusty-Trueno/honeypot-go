@@ -19,20 +19,18 @@ var wg sync.WaitGroup
 
 var poolX *ants.Pool
 
-var stop = false
-
 func Start(addr string, done chan bool) {
 	kvData = make(map[string]string)
-	connDone := make(chan bool)
 
 	// 建立socket，监听端口
 	netListen, _ := net.Listen("tcp", addr)
-	go closeSocket(netListen, connDone)
 
 	defer netListen.Close()
 
 	wg, poolX = pool.New(1)
 	defer poolX.Release()
+
+	go closeSocket(netListen, poolX, done)
 
 	flag := false
 
@@ -50,42 +48,33 @@ func Start(addr string, done chan bool) {
 				return
 			}
 
-			fmt.Printf("Redis 连接成功！")
+			fmt.Printf("Redis 连接成功！\n")
 
-			go handleConnection(conn, done, connDone)
+			go handleConnection(conn, done)
 
 			wg.Done()
 		})
+		fmt.Printf("test\n")
 		if flag {
+			fmt.Printf("flag\n")
 			break
 		}
 	}
 }
 
-func closeSocket(netListen net.Listener, connDone chan bool) {
-	<-connDone
-	fmt.Printf("close socket")
+func closeSocket(netListen net.Listener, poolX *ants.Pool, done chan bool) {
+	<-done
+	fmt.Printf("close socket\n")
 	if err := netListen.Close(); err != nil {
 		fmt.Errorf("listen close failed error is %v\n", err)
 	}
-}
-
-func closeConn(conn net.Conn, done, connDone chan bool) {
-	<-done
-	fmt.Printf("closeConn")
-	stop = true
-	conn.Close()
-	connDone <- true
+	poolX.Release()
 }
 
 //处理 Redis 连接
-func handleConnection(conn net.Conn, done, connDone chan bool) {
-
-	go closeConn(conn, done, connDone)
+func handleConnection(conn net.Conn, done chan bool) {
+	fmt.Printf("new connection\n")
 	for {
-		if stop {
-			goto end
-		}
 		str := parseRESP(conn)
 
 		switch value := str.(type) {

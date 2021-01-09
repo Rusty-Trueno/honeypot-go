@@ -1,11 +1,41 @@
 package status
 
-var redisStop = false
+var redisDone = make(chan bool)
 
-func GetRedisStatus() bool {
-	return redisStop
+var mysqlDone = make(chan bool)
+
+func GetRedisDone() chan bool {
+	return redisDone
 }
 
+func SetRedisDone(done bool) {
+	redisDone <- done
+}
+
+func GetMysqlDone() chan bool {
+	return mysqlDone
+}
+
+func SetMysqlDone(done bool) {
+	mysqlDone <- done
+}
+
+var redisStatus = false
+
+var mysqlStatus = false
+
 func SetRedisStatus(status bool) {
-	redisStop = status
+	redisStatus = status
+}
+
+func GetRedisStatus() bool {
+	return redisStatus
+}
+
+func SetMysqlStatus(status bool) {
+	mysqlStatus = status
+}
+
+func GetMysqlStatus() bool {
+	return mysqlStatus
 }

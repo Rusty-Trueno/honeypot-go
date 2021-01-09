@@ -2,3 +2,10 @@ mqtt:
   server: tcp://121.36.70.254:1883
   mode: 0
   clientId: honeypot
+honeypot:
+  redis:
+    addr: 0.0.0.0:6378
+
+  mysql:
+    addr: 0.0.0.0:3308
+    files: /etc/passwd,/etc/group

@@ -38,7 +38,7 @@ var msgHandler MQTT.MessageHandler = func(client MQTT.Client, message MQTT.Messa
 	if order.Target == "redis" {
 		if order.Move == "open" {
 			if !status.GetRedisStatus() {
-				go redis.Start("127.0.0.1:6378", status.GetRedisDone())
+				go redis.Start(conf.GetConfig().HoneypotConfig.RedisConfig.Addr, status.GetRedisDone())
 				status.SetRedisStatus(true)
 			}
 		} else if order.Move == "stop" {
@@ -50,7 +50,7 @@ var msgHandler MQTT.MessageHandler = func(client MQTT.Client, message MQTT.Messa
 	} else if order.Target == "mysql" {
 		if order.Move == "open" {
 			if !status.GetMysqlStatus() {
-				go mysql.Start("0.0.0.0:3308", "/etc/passwd,/etc/group", status.GetMysqlDone())
+				go mysql.Start(conf.GetConfig().HoneypotConfig.MysqlConfig.Addr, conf.GetConfig().HoneypotConfig.MysqlConfig.Files, status.GetMysqlDone())
 				status.SetMysqlStatus(true)
 			}
 		} else if order.Move == "stop" {

@@ -9,13 +9,28 @@ import (
 var DEV_CONFIG_FILE_PATH = "conf/config.dev.yaml"
 
 type MqttConfig struct {
-	Server		string 		`yaml:"server"`
-	Mode		int64		`yaml:"mode"`
-	ClientId	string		`yaml:"clientId"`
+	Server   string `yaml:"server"`
+	Mode     int64  `yaml:"mode"`
+	ClientId string `yaml:"clientId"`
+}
+
+type HoneypotConfig struct {
+	RedisConfig RedisConfig `yaml:"redis,omitempty"`
+	MysqlConfig MysqlConfig `yaml:"mysql,omitempty"`
+}
+
+type RedisConfig struct {
+	Addr string `yaml:"addr"`
+}
+
+type MysqlConfig struct {
+	Addr  string `yaml:"addr"`
+	Files string `yaml:"files"`
 }
 
 type ConfigFile struct {
-	Mqtt 		MqttConfig		`yaml:"mqtt"`
+	Mqtt           MqttConfig     `yaml:"mqtt"`
+	HoneypotConfig HoneypotConfig `yaml:"honeypot"`
 }
 
 var config *ConfigFile
@@ -25,7 +40,6 @@ func Init() {
 	if err != nil {
 		log.Fatalf("io error: %v\n", err)
 	}
-
 
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {

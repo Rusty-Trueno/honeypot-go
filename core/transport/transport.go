@@ -19,6 +19,8 @@ var wg sync.WaitGroup
 
 var poolX *ants.Pool
 
+var redisDone = make(chan bool)
+
 var connectHandler MQTT.OnConnectHandler = func(client MQTT.Client) {
 	fmt.Printf("Connect succeed!\n")
 }
@@ -36,9 +38,9 @@ var msgHandler MQTT.MessageHandler = func(client MQTT.Client, message MQTT.Messa
 	}
 	if order.Target == "redis" {
 		if order.Move == "open" {
-			go redis.Start("127.0.0.1:6378")
+			go redis.Start("127.0.0.1:6378", redisDone)
 		} else if order.Move == "stop" {
-			go redis.Stop()
+			redisDone <- true
 		}
 	} else if order.Target == "mysql" {
 		if order.Move == "open" {
@@ -59,6 +61,7 @@ func Start(mqttConfig conf.MqttConfig) {
 	go clientInit(mqttConfig.Server, mqttConfig.ClientId, "", "")
 	wg.Wait()
 }
+
 func clientInit(server, clientID, username, password string) {
 	opts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientID).SetCleanSession(true)
 	if username != "" {

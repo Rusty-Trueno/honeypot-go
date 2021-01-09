@@ -21,16 +21,20 @@ var poolX *ants.Pool
 
 var stop = false
 
-func Start(addr string) {
+func Start(addr string, done chan bool) {
 	kvData = make(map[string]string)
+	connDone := make(chan bool)
 
 	// 建立socket，监听端口
 	netListen, _ := net.Listen("tcp", addr)
+	go closeSocket(netListen, connDone)
 
 	defer netListen.Close()
 
 	wg, poolX = pool.New(1)
 	defer poolX.Release()
+
+	flag := false
 
 	for {
 		wg.Add(1)
@@ -41,31 +45,46 @@ func Start(addr string) {
 
 			if err != nil {
 				fmt.Printf("Redis 连接失败， error is %v\n", err)
+				wg.Done()
+				flag = true
+				return
 			}
 
 			fmt.Printf("Redis 连接成功！")
 
-			go handleConnection(conn)
+			go handleConnection(conn, done, connDone)
 
 			wg.Done()
 		})
-		if stop {
+		if flag {
 			break
 		}
 	}
 }
 
-func Stop() {
+func closeSocket(netListen net.Listener, connDone chan bool) {
+	<-connDone
+	fmt.Printf("close socket")
+	if err := netListen.Close(); err != nil {
+		fmt.Errorf("listen close failed error is %v\n", err)
+	}
+}
+
+func closeConn(conn net.Conn, done, connDone chan bool) {
+	<-done
+	fmt.Printf("closeConn")
 	stop = true
-	fmt.Printf("Redis蜜罐关闭")
+	conn.Close()
+	connDone <- true
 }
 
 //处理 Redis 连接
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, done, connDone chan bool) {
 
+	go closeConn(conn, done, connDone)
 	for {
 		if stop {
-			break
+			goto end
 		}
 		str := parseRESP(conn)
 
@@ -121,6 +140,9 @@ end:
 
 // 解析 Redis 协议
 func parseRESP(conn net.Conn) interface{} {
+	if conn == nil {
+		return ""
+	}
 	r := bufio.NewReader(conn)
 	line, err := r.ReadString('\n')
 	if err != nil {

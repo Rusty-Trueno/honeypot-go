@@ -50,7 +50,7 @@ func Start(addr string, done chan bool) {
 
 			fmt.Printf("Redis 连接成功！\n")
 
-			go handleConnection(conn, done)
+			go handleConnection(conn)
 
 			wg.Done()
 		})
@@ -72,7 +72,7 @@ func closeSocket(netListen net.Listener, poolX *ants.Pool, done chan bool) {
 }
 
 //处理 Redis 连接
-func handleConnection(conn net.Conn, done chan bool) {
+func handleConnection(conn net.Conn) {
 	fmt.Printf("new connection\n")
 	for {
 		str := parseRESP(conn)

@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
 	"honeypot/utils/try"
 	"net"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -36,7 +38,11 @@ var fileNames []string
 //记录每个客户端连接的次数
 var recordClient = make(map[string]int)
 
-func Start(addr string, files string) {
+var wg sync.WaitGroup
+
+var poolX *ants.Pool
+
+func Start(addr string, files string, done chan bool) {
 	// 启动 Mysql 服务端
 	serverAddr, _ := net.ResolveTCPAddr("tcp", addr)
 	listener, _ := net.ListenTCP("tcp", serverAddr)
@@ -44,8 +50,12 @@ func Start(addr string, files string) {
 	// 读取文件列表
 	fileNames = strings.Split(files, ",")
 
-	wg, poolX := pool.New(10)
+	wg, poolX = pool.New(1)
 	defer poolX.Release()
+
+	go closeSocket(listener, poolX, done)
+
+	flag := false
 
 	for {
 		wg.Add(1)
@@ -56,6 +66,9 @@ func Start(addr string, files string) {
 
 			if err != nil {
 				fmt.Printf("Mysql", "127.0.0.1", "Mysql 连接失败", err)
+				wg.Done()
+				flag = true
+				return
 			}
 
 			arr := strings.Split(conn.RemoteAddr().String(), ":")
@@ -77,6 +90,15 @@ func Start(addr string, files string) {
 			wg.Done()
 		})
 	}
+}
+
+func closeSocket(netListen net.Listener, poolX *ants.Pool, done chan bool) {
+	<-done
+	fmt.Printf("close socket\n")
+	if err := netListen.Close(); err != nil {
+		fmt.Errorf("listen close failed error is %v\n", err)
+	}
+	poolX.Release()
 }
 
 func connectionClientHandler(conn net.Conn) {

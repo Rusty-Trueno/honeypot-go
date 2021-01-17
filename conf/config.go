@@ -9,9 +9,10 @@ import (
 var DEV_CONFIG_FILE_PATH = "conf/config.dev.yaml"
 
 type MqttConfig struct {
-	Server   string `yaml:"server"`
-	Mode     int64  `yaml:"mode"`
-	ClientId string `yaml:"clientId"`
+	Server       string `yaml:"server"`
+	Mode         int64  `yaml:"mode"`
+	DownClientId string `yaml:"downClientId"`
+	UpClientId   string `yaml:"upClientId"`
 }
 
 type HoneypotConfig struct {

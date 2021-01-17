@@ -2,12 +2,17 @@ package controller
 
 import (
 	"honeypot/conf"
-	"honeypot/core/transport"
+	"honeypot/core/pool"
+	"honeypot/core/transport/downstream"
+	"honeypot/core/transport/upstream"
 )
-
 
 func Run() {
 	conf.Init()
-	transport.Start(conf.GetConfig().Mqtt)
+	wg, poolX := pool.New(1)
+	defer poolX.Release()
+	wg.Add(1)
+	downstream.ClientInit(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.DownClientId, "", "")
+	upstream.ClientInit(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.UpClientId, "", "")
+	wg.Wait()
 }
-

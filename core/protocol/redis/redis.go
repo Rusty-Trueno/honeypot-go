@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
+	"honeypot/core/report"
 	"honeypot/utils/try"
 	"net"
 	"strconv"
@@ -47,6 +48,10 @@ func Start(addr string, done chan bool) {
 				flag = true
 				return
 			}
+
+			arr := strings.Split(conn.RemoteAddr().String(), ":")
+
+			report.ReportToEdge("REDIS", arr[0], conn.RemoteAddr().String()+" 已经连接")
 
 			fmt.Printf("Redis 连接成功！\n")
 

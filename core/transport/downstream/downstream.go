@@ -1,24 +1,17 @@
-package transport
+package downstream
 
 import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/panjf2000/ants"
 	"honeypot/conf"
-	"honeypot/core/pool"
 	"honeypot/core/protocol/mysql"
 	"honeypot/core/protocol/redis"
 	"honeypot/core/status"
-	"sync"
 )
 
 var Client MQTT.Client
-
-var wg sync.WaitGroup
-
-var poolX *ants.Pool
 
 var connectHandler MQTT.OnConnectHandler = func(client MQTT.Client) {
 	fmt.Printf("Connect succeed!\n")
@@ -67,15 +60,7 @@ type Order struct {
 	Target string `json:"target"`
 }
 
-func Start(mqttConfig conf.MqttConfig) {
-	wg, poolX = pool.New(1)
-	defer poolX.Release()
-	wg.Add(1)
-	go clientInit(mqttConfig.Server, mqttConfig.ClientId, "", "")
-	wg.Wait()
-}
-
-func clientInit(server, clientID, username, password string) {
+func ClientInit(server, clientID, username, password string) {
 	opts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientID).SetCleanSession(true)
 	if username != "" {
 		opts.SetUsername(username)

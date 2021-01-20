@@ -5,7 +5,7 @@ mqtt:
   upClientId: honeypotUp
 honeypot:
   redis:
-    addr: 0.0.0.0:6378
+    addr: 0.0.0.0:6379
 
   mysql:
     addr: 0.0.0.0:3308

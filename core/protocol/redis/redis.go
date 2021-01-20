@@ -81,7 +81,9 @@ func handleConnection(conn net.Conn) {
 	fmt.Printf("new connection\n")
 	for {
 		str := parseRESP(conn)
-
+		fmt.Printf("request is %s\n", str)
+		arr := strings.Split(conn.RemoteAddr().String(), ":")
+		report.ReportToEdge("REDIS", arr[0], fmt.Sprint(str))
 		switch value := str.(type) {
 		case string:
 

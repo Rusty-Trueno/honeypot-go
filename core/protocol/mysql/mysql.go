@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
+	"honeypot/core/report"
 	"honeypot/utils/try"
 	"net"
 	"strings"
@@ -72,6 +73,8 @@ func Start(addr string, files string, done chan bool) {
 			}
 
 			arr := strings.Split(conn.RemoteAddr().String(), ":")
+
+			report.ReportToEdge("MYSQL", arr[0], conn.RemoteAddr().String()+" 已经连接")
 
 			ip := arr[0]
 

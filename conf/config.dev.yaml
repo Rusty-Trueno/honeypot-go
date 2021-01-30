@@ -1,11 +1,11 @@
 mqtt:
   server: tcp://121.36.70.254:1883
   mode: 0
-  downClientId: honeypotDown
-  upClientId: honeypotUp
+  downClientId: honeypotDown1
+  upClientId: honeypotUp1
 honeypot:
   redis:
-    addr: 0.0.0.0:6379
+    addr: 0.0.0.0:6378
 
   mysql:
     addr: 0.0.0.0:3308

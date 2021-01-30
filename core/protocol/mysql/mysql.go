@@ -7,7 +7,7 @@ import (
 	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
 	"honeypot/core/report"
-	"honeypot/utils/try"
+	"honeypot/util"
 	"net"
 	"strings"
 	"sync"
@@ -115,7 +115,7 @@ func connectionClientHandler(conn net.Conn) {
 
 	fmt.Printf("Mysql", arr[0], "已经连接")
 
-	try.Try(func() {
+	util.Try(func() {
 		var ibuf = make([]byte, bufLength)
 
 		//第一个包

@@ -6,7 +6,7 @@ import (
 	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
 	"honeypot/core/report"
-	"honeypot/utils/try"
+	"honeypot/util"
 	"net"
 	"strconv"
 	"strings"
@@ -95,7 +95,7 @@ func handleConnection(conn net.Conn) {
 			if value[0] == "SET" || value[0] == "set" {
 				// 模拟 redis set
 
-				try.Try(func() {
+				util.Try(func() {
 					key := string(value[1])
 					val := string(value[2])
 					kvData[key] = val
@@ -106,7 +106,7 @@ func handleConnection(conn net.Conn) {
 
 				conn.Write([]byte("+OK\r\n"))
 			} else if value[0] == "GET" || value[0] == "get" {
-				try.Try(func() {
+				util.Try(func() {
 					// 模拟 redis get
 					key := string(value[1])
 					val := string(kvData[key])
@@ -119,7 +119,7 @@ func handleConnection(conn net.Conn) {
 					conn.Write([]byte("+OK\r\n"))
 				})
 			} else {
-				try.Try(func() {
+				util.Try(func() {
 				}).Catch(func() {
 				})
 

@@ -6,6 +6,7 @@ import (
 	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
 	"honeypot/core/report"
+	"honeypot/core/status"
 	"honeypot/util"
 	"net"
 	"strconv"
@@ -172,6 +173,7 @@ func parseRESP(conn net.Conn) interface{} {
 		}
 		return data
 	default:
+		status.SetRedisUnMatch(conn.RemoteAddr().String())
 		return cmdTxt
 	}
 }

@@ -16,8 +16,9 @@ type MqttConfig struct {
 }
 
 type HoneypotConfig struct {
-	RedisConfig RedisConfig `yaml:"redis,omitempty"`
-	MysqlConfig MysqlConfig `yaml:"mysql,omitempty"`
+	RedisConfig  RedisConfig  `yaml:"redis,omitempty"`
+	MysqlConfig  MysqlConfig  `yaml:"mysql,omitempty"`
+	TelnetConfig TelnetConfig `yaml:"telnet,omitempty"`
 }
 
 type RedisConfig struct {
@@ -27,6 +28,10 @@ type RedisConfig struct {
 type MysqlConfig struct {
 	Addr  string `yaml:"addr"`
 	Files string `yaml:"files"`
+}
+
+type TelnetConfig struct {
+	Addr string `yaml:"addr"`
 }
 
 type ConfigFile struct {

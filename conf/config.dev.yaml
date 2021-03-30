@@ -1,5 +1,5 @@
 mqtt:
-  server: tcp://121.36.70.254:1883
+  server: tcp://182.92.222.53:1883
   mode: 0
   downClientId: honeypotDown1
   upClientId: honeypotUp1
@@ -10,3 +10,6 @@ honeypot:
   mysql:
     addr: 0.0.0.0:3308
     files: /etc/passwd,/etc/group
+
+  telnet:
+    addr: 0.0.0.0:23

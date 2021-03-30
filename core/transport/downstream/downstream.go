@@ -8,6 +8,7 @@ import (
 	"honeypot/conf"
 	"honeypot/core/protocol/mysql"
 	"honeypot/core/protocol/redis"
+	"honeypot/core/protocol/telnet"
 	"honeypot/core/status"
 )
 
@@ -50,6 +51,18 @@ var msgHandler MQTT.MessageHandler = func(client MQTT.Client, message MQTT.Messa
 			if status.GetMysqlStatus() {
 				status.SetMysqlDone(true)
 				status.SetMysqlStatus(false)
+			}
+		}
+	} else if order.Target == "telnet" {
+		if order.Move == "open" {
+			if !status.GetTelnetStatus() {
+				go telnet.Start(conf.GetConfig().HoneypotConfig.TelnetConfig.Addr, status.GetTelnetDone())
+				status.SetTelnetStatus(true)
+			}
+		} else if order.Move == "stop" {
+			if status.GetTelnetStatus() {
+				status.SetTelnetDone(true)
+				status.SetTelnetStatus(false)
 			}
 		}
 	}

@@ -4,6 +4,8 @@ var redisDone = make(chan bool)
 
 var mysqlDone = make(chan bool)
 
+var telnetDone = make(chan bool)
+
 func GetRedisDone() chan bool {
 	return redisDone
 }
@@ -20,9 +22,19 @@ func SetMysqlDone(done bool) {
 	mysqlDone <- done
 }
 
+func GetTelnetDone() chan bool {
+	return telnetDone
+}
+
+func SetTelnetDone(done bool) {
+	telnetDone <- done
+}
+
 var redisStatus = false
 
 var mysqlStatus = false
+
+var telnetStatus = false
 
 func SetRedisStatus(status bool) {
 	redisStatus = status
@@ -38,4 +50,22 @@ func SetMysqlStatus(status bool) {
 
 func GetMysqlStatus() bool {
 	return mysqlStatus
+}
+
+func SetTelnetStatus(status bool) {
+	telnetStatus = status
+}
+
+func GetTelnetStatus() bool {
+	return telnetStatus
+}
+
+var redisUnMatch = make(chan string)
+
+func SetRedisUnMatch(unMatchId string) {
+	redisUnMatch <- unMatchId
+}
+
+func GetRedisUnMatch() chan string {
+	return redisUnMatch
 }

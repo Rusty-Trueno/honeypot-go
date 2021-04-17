@@ -55,6 +55,7 @@ func Start(addr string, done chan bool) {
 			report.ReportToEdge("REDIS", arr[0], conn.RemoteAddr().String()+" 已经连接")
 
 			fmt.Printf("Redis 连接成功！\n")
+			status.SetConnIn()
 
 			go handleConnection(conn)
 
@@ -133,6 +134,7 @@ func handleConnection(conn net.Conn) {
 	}
 end:
 	conn.Close()
+	status.SetConnOut()
 }
 
 // 解析 Redis 协议

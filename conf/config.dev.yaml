@@ -3,6 +3,7 @@ mqtt:
   mode: 0
   downClientId: honeypotDown1
   upClientId: honeypotUp1
+  kdd99ClientId: kdd99
 honeypot:
   redis:
     addr: 0.0.0.0:6378
@@ -13,3 +14,10 @@ honeypot:
 
   telnet:
     addr: 0.0.0.0:23
+
+  web:
+    addr: 0.0.0.0:9000
+    template: wordPress/html
+    index: index.html
+    static: wordPress/static
+    url: /

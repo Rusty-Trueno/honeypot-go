@@ -9,6 +9,7 @@ import (
 	"honeypot/core/protocol/mysql"
 	"honeypot/core/protocol/redis"
 	"honeypot/core/protocol/telnet"
+	"honeypot/core/protocol/web"
 	"honeypot/core/status"
 )
 
@@ -65,7 +66,27 @@ var msgHandler MQTT.MessageHandler = func(client MQTT.Client, message MQTT.Messa
 				status.SetTelnetStatus(false)
 			}
 		}
+	} else if order.Target == "web" {
+		if order.Move == "open" {
+			if !status.GetWebStatus() {
+				webConfig := conf.GetConfig().HoneypotConfig.WebConfig
+				go web.Start(webConfig.Addr, webConfig.Template, webConfig.Static, webConfig.Url, webConfig.Index, status.GetWebDone())
+				status.SetWebStatus(true)
+			}
+		} else if order.Move == "stop" {
+			if status.GetWebStatus() {
+				status.SetWebDone(true)
+				status.SetWebStatus(false)
+			}
+		}
 	}
+	//else if order.Target == "kdd99" {
+	//	if order.Move == "start" {
+	//		Kdd99ClientStart(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.Kdd99ClientId, "", "")
+	//	} else if order.Move == "stop" {
+	//		Kdd99ClientStop()
+	//	}
+	//}
 }
 
 type Order struct {

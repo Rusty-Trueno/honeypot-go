@@ -11,6 +11,18 @@ import (
 	"honeypot/core/protocol/telnet"
 	"honeypot/core/protocol/web"
 	"honeypot/core/status"
+	"honeypot/model"
+)
+
+const (
+	DeviceETPrefix            = "$hw/events/device/"
+	DeviceETStateUpdateSuffix = "/state/update"
+	TwinETUpdateSuffix        = "/twin/update"
+	TwinETCloudSyncSuffix     = "/twin/cloud_updated"
+	TwinETGetResultSuffix     = "/twin/get/result"
+	TwinETGetSuffix           = "/twin/get"
+	Switch                    = "switch"
+	ModelName                 = "honeypot"
 )
 
 var Client MQTT.Client
@@ -80,13 +92,6 @@ var msgHandler MQTT.MessageHandler = func(client MQTT.Client, message MQTT.Messa
 			}
 		}
 	}
-	//else if order.Target == "kdd99" {
-	//	if order.Move == "start" {
-	//		Kdd99ClientStart(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.Kdd99ClientId, "", "")
-	//	} else if order.Move == "stop" {
-	//		Kdd99ClientStop()
-	//	}
-	//}
 }
 
 type Order struct {
@@ -116,3 +121,14 @@ func ClientInit(server, clientID, username, password string) {
 		fmt.Errorf("subscribe error: %v\n", token.Error())
 	}
 }
+
+func createActualUpdateMessage(actualValue string) model.DeviceTwinUpdate {
+	var deviceTwinUpdateMessage model.DeviceTwinUpdate
+	actualMap := map[string]*model.MsgTwin{Switch: {Actual: &model.TwinValue{Value: &actualValue}, Metadata: &model.TypeMetadata{Type: "Updated"}}}
+	deviceTwinUpdateMessage.Twin = actualMap
+	return deviceTwinUpdateMessage
+}
+
+//func getTwin(updateMessage model.DeviceTwinUpdate) {
+//	getTwin := DeviceETPrefix +
+//}

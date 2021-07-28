@@ -41,5 +41,22 @@ type MsgTwin struct {
 //DeviceTwinUpdate the struct of device twin update
 type DeviceTwinUpdate struct {
 	BaseMessage
+	DeviceMeta
 	Twin map[string]*MsgTwin `json:"twin"`
+}
+
+type DeviceMeta struct {
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
+type DeviceList struct {
+	Devices []DeviceMeta `json:"devices"`
+}
+
+type MemberUpdate struct {
+	BaseMessage
+	Added   []DeviceTwinUpdate `json:"added_devices"`
+	Removed []DeviceTwinUpdate `json:"removed_devices"`
 }

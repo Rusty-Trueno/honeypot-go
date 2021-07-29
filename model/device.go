@@ -42,7 +42,8 @@ type MsgTwin struct {
 type DeviceTwinUpdate struct {
 	BaseMessage
 	DeviceMeta
-	Twin map[string]*MsgTwin `json:"twin"`
+	Twin  map[string]*MsgTwin `json:"twin"`
+	Delta map[string]string   `json:"delta"`
 }
 
 type DeviceMeta struct {

@@ -54,14 +54,13 @@ func (m *Manager) watchMemberUpdate(done <-chan struct{}) {
 			// handle added event
 			for i := range memberUpdate.Added {
 				device := memberUpdate.Added[i]
-				pot := &honeypot.Honeypot{
-					Name:     device.Id,
-					Protocol: *device.Twin["protocol"].Expected.Value,
-					StopCh:   make(chan bool),
-					DoneCh:   make(chan bool),
-					Twin:     device.Twin,
-				}
+				pot := honeypot.NewPot(
+					device.Id,
+					*device.Twin["port"].Expected.Value,
+					*device.Twin["protocol"].Expected.Value,
+					*device.Twin["switch"].Expected.Value)
 				m.Pots[device.Id] = pot
+				go pot.Watch()
 			}
 			// handle removed event
 			for i := range memberUpdate.Removed {
@@ -78,7 +77,7 @@ func (m *Manager) watchMemberUpdate(done <-chan struct{}) {
 
 func (m *Manager) watchAllPots() {
 	for _, pot := range m.Pots {
-		pot.Watch()
+		go pot.Watch()
 	}
 }
 
@@ -107,13 +106,11 @@ func (m *Manager) getAllPots(node string) {
 		potId := devices.Devices[i].Id
 		if strings.HasPrefix(potId, "pot") {
 			device := getHoneypot(potId)
-			pot := &honeypot.Honeypot{
-				Name:     potId,
-				Protocol: *device.Twin["protocol"].Expected.Value,
-				StopCh:   make(chan bool),
-				DoneCh:   make(chan bool),
-				Twin:     device.Twin,
-			}
+			pot := honeypot.NewPot(
+				device.Id,
+				*device.Twin["port"].Expected.Value,
+				*device.Twin["protocol"].Expected.Value,
+				*device.Twin["switch"].Expected.Value)
 			m.Pots[potId] = pot
 		}
 	}

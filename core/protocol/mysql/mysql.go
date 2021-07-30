@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
-	"honeypot/core/report"
+	"honeypot/core/transport/bypass"
 	"honeypot/util"
 	"net"
 	"strings"
@@ -43,7 +43,7 @@ var wg sync.WaitGroup
 
 var poolX *ants.Pool
 
-func Start(addr string, files string, done chan bool) {
+func Start(potId, addr string, files string, done chan bool) {
 	// 启动 Mysql 服务端
 	serverAddr, _ := net.ResolveTCPAddr("tcp", addr)
 	listener, _ := net.ListenTCP("tcp", serverAddr)
@@ -74,7 +74,7 @@ func Start(addr string, files string, done chan bool) {
 
 			arr := strings.Split(conn.RemoteAddr().String(), ":")
 
-			report.ReportToEdge("MYSQL", arr[0], conn.RemoteAddr().String()+" 已经连接")
+			bypass.ReportToEdge(potId, "MYSQL", arr[0], conn.RemoteAddr().String()+" 已经连接")
 
 			ip := arr[0]
 

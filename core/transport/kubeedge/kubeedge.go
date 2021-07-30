@@ -107,7 +107,7 @@ func (m *Manager) getAllPots(node string) {
 		if strings.HasPrefix(potId, "pot") {
 			device := getHoneypot(potId)
 			pot := honeypot.NewPot(
-				device.Id,
+				potId,
 				*device.Twin["port"].Expected.Value,
 				*device.Twin["protocol"].Expected.Value,
 				*device.Twin["switch"].Expected.Value)

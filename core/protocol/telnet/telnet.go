@@ -19,7 +19,7 @@ var wg sync.WaitGroup
 var poolX *ants.Pool
 
 // 服务端连接
-func Start(address string, done chan bool) {
+func Start(potId, address string, done chan bool) {
 	l, err := net.Listen("tcp", address)
 
 	if err != nil {

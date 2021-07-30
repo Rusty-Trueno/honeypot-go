@@ -22,4 +22,7 @@ const (
 	TwinETDeltaSuffix          = "/twin/update/delta"
 	Switch                     = "switch"
 	ModelName                  = "honeypot"
+
+	//bypass topic
+	BypassPotMsg = "/honeypot/msg"
 )

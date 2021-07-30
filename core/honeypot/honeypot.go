@@ -49,21 +49,21 @@ func (h *Honeypot) start() {
 		} else {
 			addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
 		}
-		go redis.Start(addr, h.StopCh)
+		go redis.Start(h.Name, addr, h.StopCh)
 	case constant.Mysql:
 		if h.Port == "" {
 			addr = conf.GetConfig().HoneypotConfig.MysqlConfig.Addr
 		} else {
 			addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
 		}
-		go mysql.Start(addr, conf.GetConfig().HoneypotConfig.MysqlConfig.Files, h.StopCh)
+		go mysql.Start(h.Name, addr, conf.GetConfig().HoneypotConfig.MysqlConfig.Files, h.StopCh)
 	case constant.Telnet:
 		if h.Port == "" {
 			addr = conf.GetConfig().HoneypotConfig.TelnetConfig.Addr
 		} else {
 			addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
 		}
-		go telnet.Start(addr, h.StopCh)
+		go telnet.Start(h.Name, addr, h.StopCh)
 	case constant.Web:
 		if h.Port == "" {
 			addr = conf.GetConfig().HoneypotConfig.WebConfig.Addr
@@ -110,10 +110,6 @@ func (h *Honeypot) Watch() {
 							h.stop()
 						}
 					}
-					//err := h.updateSwitch(v)
-					//if err != nil {
-					//	fmt.Errorf("update switch failed, err is %v", err)
-					//}
 				case "port":
 					if h.Port != v {
 						h.changeBindPort(v)

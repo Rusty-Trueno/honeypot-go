@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
-	"honeypot/core/report"
 	"honeypot/core/status"
+	"honeypot/core/transport/bypass"
 	"honeypot/util"
 	"net"
 	"strconv"
@@ -21,11 +21,15 @@ var wg sync.WaitGroup
 
 var poolX *ants.Pool
 
-func Start(addr string, done chan bool) {
+func Start(potId, addr string, done chan bool) {
 	kvData = make(map[string]string)
 
 	// 建立socket，监听端口
-	netListen, _ := net.Listen("tcp", addr)
+	netListen, err := net.Listen("tcp", addr)
+	if err != nil {
+		fmt.Errorf("redis listen failed, err is %v", err)
+		return
+	}
 
 	defer netListen.Close()
 
@@ -52,12 +56,12 @@ func Start(addr string, done chan bool) {
 
 			arr := strings.Split(conn.RemoteAddr().String(), ":")
 
-			report.ReportToEdge("REDIS", arr[0], conn.RemoteAddr().String()+" 已经连接")
+			bypass.ReportToEdge(potId, "REDIS", arr[0], conn.RemoteAddr().String()+" 已经连接")
 
 			fmt.Printf("Redis 连接成功！\n")
 			status.SetConnIn()
 
-			go handleConnection(conn)
+			go handleConnection(conn, potId)
 
 			wg.Done()
 		})
@@ -79,13 +83,13 @@ func closeSocket(netListen net.Listener, poolX *ants.Pool, done chan bool) {
 }
 
 //处理 Redis 连接
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, potId string) {
 	fmt.Printf("new connection\n")
 	for {
 		str := parseRESP(conn)
 		fmt.Printf("request is %s\n", str)
 		arr := strings.Split(conn.RemoteAddr().String(), ":")
-		report.ReportToEdge("REDIS", arr[0], fmt.Sprint(str))
+		bypass.ReportToEdge(potId, "REDIS", arr[0], fmt.Sprint(str))
 		switch value := str.(type) {
 		case string:
 

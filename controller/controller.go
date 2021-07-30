@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"honeypot/conf"
 	"honeypot/core/pool"
+	"honeypot/core/transport/bypass"
 	"honeypot/core/transport/kubeedge"
 	"honeypot/core/transport/mqtt"
 )
@@ -16,6 +17,10 @@ func Run(node string) {
 	err := mqtt.InitMqttClient(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.DownClientId, "", "")
 	if err != nil {
 		fmt.Errorf("init mqtt client failed, err is %v", err)
+	}
+	err = bypass.InitMqttClient(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.UpClientId, "", "", node)
+	if err != nil {
+		fmt.Errorf("init bypass mqtt client failed, err is %v", err)
 	}
 	cfg := kubeedge.Config{
 		Server:   conf.GetConfig().Mqtt.Server,

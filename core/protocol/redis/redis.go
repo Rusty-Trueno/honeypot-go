@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants"
 	"honeypot/core/pool"
-	"honeypot/core/status"
 	"honeypot/core/transport/bypass"
 	"honeypot/util"
 	"net"
@@ -59,7 +58,6 @@ func Start(potId, addr string, done chan bool) {
 			bypass.ReportToEdge(potId, "REDIS", arr[0], conn.RemoteAddr().String()+" 已经连接")
 
 			fmt.Printf("Redis 连接成功！\n")
-			status.SetConnIn()
 
 			go handleConnection(conn, potId)
 
@@ -138,7 +136,6 @@ func handleConnection(conn net.Conn, potId string) {
 	}
 end:
 	conn.Close()
-	status.SetConnOut()
 }
 
 // 解析 Redis 协议
@@ -179,7 +176,6 @@ func parseRESP(conn net.Conn) interface{} {
 		}
 		return data
 	default:
-		status.SetRedisUnMatch(conn.RemoteAddr().String())
 		return cmdTxt
 	}
 }

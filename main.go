@@ -7,12 +7,14 @@ import (
 
 var (
 	node = ""
+	env  = ""
 )
 
 func init() {
-	flag.StringVar(&node, "node", "edge", "the node of this mapper")
+	flag.StringVar(&node, "node", "hqq", "the node of this mapper")
+	flag.StringVar(&env, "env", "windows", "the current env")
 }
 
 func main() {
-	controller.Run(node)
+	controller.Run(node, env)
 }

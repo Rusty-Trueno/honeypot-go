@@ -14,6 +14,7 @@ import (
 	"honeypot/model"
 	"honeypot/util/constant"
 	"honeypot/util/linux"
+	"honeypot/util/windows"
 	"time"
 )
 
@@ -25,9 +26,10 @@ type Honeypot struct {
 	Port     string
 	Protocol string
 	Switch   string
+	Env      string
 }
 
-func NewPot(Name, Port, Protocol, Switch string) *Honeypot {
+func NewPot(Name, Port, Protocol, Switch, Env string) *Honeypot {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Honeypot{
 		Name:     Name,
@@ -37,6 +39,7 @@ func NewPot(Name, Port, Protocol, Switch string) *Honeypot {
 		StopCh:   make(chan bool),
 		cancel:   cancel,
 		ctx:      ctx,
+		Env:      Env,
 	}
 }
 
@@ -157,13 +160,24 @@ func (h *Honeypot) watchPotStatus() {
 		select {
 		case <-time.After(10 * time.Second):
 			var status string
-			if !linux.CheckPort(h.Port) {
-				// 如果端口不再监听了
-				fmt.Println("not listen")
-				status = "OFF"
-			} else {
-				fmt.Println("listening")
-				status = "ON"
+			if h.Env == constant.Windows {
+				if !windows.CheckPort(h.Port) {
+					// 如果端口不再监听了
+					fmt.Println("not listen")
+					status = "OFF"
+				} else {
+					fmt.Println("listening")
+					status = "ON"
+				}
+			} else if h.Env == constant.Linux {
+				if !linux.CheckPort(h.Port) {
+					// 如果端口不再监听了
+					fmt.Println("not listen")
+					status = "OFF"
+				} else {
+					fmt.Println("listening")
+					status = "ON"
+				}
 			}
 			err := h.updateSwitch(status)
 			if err != nil {

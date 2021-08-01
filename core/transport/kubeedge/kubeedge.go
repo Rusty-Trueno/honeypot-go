@@ -18,6 +18,7 @@ type Config struct {
 	Username string
 	Password string
 	Node     string
+	Env      string
 }
 type Manager struct {
 	Config
@@ -58,7 +59,8 @@ func (m *Manager) watchMemberUpdate(done <-chan struct{}) {
 					device.Id,
 					*device.Twin["port"].Expected.Value,
 					*device.Twin["protocol"].Expected.Value,
-					*device.Twin["switch"].Expected.Value)
+					*device.Twin["switch"].Expected.Value,
+					m.Env)
 				m.Pots[device.Id] = pot
 				go pot.Watch()
 			}
@@ -110,7 +112,8 @@ func (m *Manager) getAllPots(node string) {
 				potId,
 				*device.Twin["port"].Expected.Value,
 				*device.Twin["protocol"].Expected.Value,
-				*device.Twin["switch"].Expected.Value)
+				*device.Twin["switch"].Expected.Value,
+				m.Env)
 			m.Pots[potId] = pot
 		}
 	}

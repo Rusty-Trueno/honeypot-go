@@ -25,4 +25,8 @@ const (
 
 	//bypass topic
 	BypassPotMsg = "/honeypot/msg"
+
+	//environment
+	Windows = "windows"
+	Linux   = "linux"
 )

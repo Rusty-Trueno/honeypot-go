@@ -9,7 +9,7 @@ import (
 	"honeypot/core/transport/mqtt"
 )
 
-func Run(node string) {
+func Run(node, env string) {
 	conf.Init()
 	wg, poolX := pool.New(1)
 	defer poolX.Release()
@@ -26,6 +26,7 @@ func Run(node string) {
 		Server:   conf.GetConfig().Mqtt.Server,
 		ClientID: conf.GetConfig().Mqtt.DownClientId,
 		Node:     node,
+		Env:      env,
 	}
 	m, err := kubeedge.New(cfg)
 	if err != nil {

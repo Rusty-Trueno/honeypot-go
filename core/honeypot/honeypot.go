@@ -6,11 +6,7 @@ import (
 	"fmt"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/fatih/color"
-	"honeypot/conf"
 	"honeypot/core/listener"
-	"honeypot/core/protocol/mysql"
-	"honeypot/core/protocol/telnet"
-	"honeypot/core/protocol/web"
 	"honeypot/core/pushers"
 	"honeypot/core/pushers/eventbus"
 	"honeypot/core/services"
@@ -82,41 +78,7 @@ func NewPot(Name, Port, Protocol, Switch, Env string) *Honeypot {
 }
 
 func (h *Honeypot) start() {
-	addr := ""
-	switch h.Protocol {
-	case constant.Redis:
-		//if h.Port == "" {
-		//	addr = conf.GetConfig().HoneypotConfig.RedisConfig.Addr
-		//} else {
-		//	addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
-		//}
-		//go redis.Start(h.Name, addr, h.StopCh)
-		go h.launchPot()
-	case constant.Mysql:
-		if h.Port == "" {
-			addr = conf.GetConfig().HoneypotConfig.MysqlConfig.Addr
-		} else {
-			addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
-		}
-		go mysql.Start(h.Name, addr, conf.GetConfig().HoneypotConfig.MysqlConfig.Files, h.StopCh)
-	case constant.Telnet:
-		if h.Port == "" {
-			addr = conf.GetConfig().HoneypotConfig.TelnetConfig.Addr
-		} else {
-			addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
-		}
-		go telnet.Start(h.Name, addr, h.StopCh)
-	case constant.Web:
-		if h.Port == "" {
-			addr = conf.GetConfig().HoneypotConfig.WebConfig.Addr
-		} else {
-			addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
-		}
-		webConfig := conf.GetConfig().HoneypotConfig.WebConfig
-		go web.Start(addr, webConfig.Template, webConfig.Static, webConfig.Url, webConfig.Index, h.StopCh)
-	default:
-		fmt.Printf("unknown protocal: %s\n", h.Protocol)
-	}
+	go h.launchPot()
 }
 
 func (h *Honeypot) Watch() {

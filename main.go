@@ -11,8 +11,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&node, "node", "hqq", "the node of this mapper")
-	flag.StringVar(&env, "env", "windows", "the current env")
+	flag.StringVar(&node, "node", "edge", "the node of this mapper")
+	flag.StringVar(&env, "env", "linux", "the current env")
 }
 
 func main() {

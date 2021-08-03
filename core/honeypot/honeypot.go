@@ -5,17 +5,55 @@ import (
 	"encoding/json"
 	"fmt"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"github.com/fatih/color"
 	"honeypot/conf"
+	"honeypot/core/listener"
 	"honeypot/core/protocol/mysql"
-	"honeypot/core/protocol/redis"
 	"honeypot/core/protocol/telnet"
 	"honeypot/core/protocol/web"
+	"honeypot/core/pushers"
+	"honeypot/core/pushers/eventbus"
+	"honeypot/core/services"
 	"honeypot/core/transport/mqtt"
 	"honeypot/model"
 	"honeypot/util/constant"
 	"honeypot/util/linux"
 	"honeypot/util/windows"
+	"net"
+	"runtime"
+	"strconv"
+	"strings"
 	"time"
+
+	_ "honeypot/core/listener/socket"
+
+	_ "honeypot/core/pushers/console"
+	_ "honeypot/core/pushers/elasticsearch"
+	_ "honeypot/core/pushers/eventbus"
+	_ "honeypot/core/pushers/file"
+	_ "honeypot/core/pushers/kafka"
+	_ "honeypot/core/pushers/lumberjack"
+	_ "honeypot/core/pushers/marija"
+	_ "honeypot/core/pushers/rabbitmq"
+	_ "honeypot/core/pushers/slack"
+	_ "honeypot/core/pushers/splunk"
+
+	_ "honeypot/core/services/bannerfmt"
+	_ "honeypot/core/services/decoder"
+	_ "honeypot/core/services/docker"
+	_ "honeypot/core/services/elasticsearch"
+	_ "honeypot/core/services/eos"
+	_ "honeypot/core/services/ethereum"
+	_ "honeypot/core/services/filesystem"
+	_ "honeypot/core/services/ftp"
+	_ "honeypot/core/services/ipp"
+	_ "honeypot/core/services/ja3/crypto/tls"
+	_ "honeypot/core/services/ldap"
+	_ "honeypot/core/services/redis"
+	_ "honeypot/core/services/smtp"
+	_ "honeypot/core/services/ssh"
+	_ "honeypot/core/services/telnet"
+	_ "honeypot/core/services/vnc"
 )
 
 type Honeypot struct {
@@ -47,12 +85,13 @@ func (h *Honeypot) start() {
 	addr := ""
 	switch h.Protocol {
 	case constant.Redis:
-		if h.Port == "" {
-			addr = conf.GetConfig().HoneypotConfig.RedisConfig.Addr
-		} else {
-			addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
-		}
-		go redis.Start(h.Name, addr, h.StopCh)
+		//if h.Port == "" {
+		//	addr = conf.GetConfig().HoneypotConfig.RedisConfig.Addr
+		//} else {
+		//	addr = fmt.Sprintf("0.0.0.0:%s", h.Port)
+		//}
+		//go redis.Start(h.Name, addr, h.StopCh)
+		go h.launchPot()
 	case constant.Mysql:
 		if h.Port == "" {
 			addr = conf.GetConfig().HoneypotConfig.MysqlConfig.Addr
@@ -252,4 +291,138 @@ func (h *Honeypot) syncProtocol(protocol string) error {
 		return err
 	}
 	return nil
+}
+
+func (h *Honeypot) launchPot() {
+	// init event bus
+	var ch pushers.Channel
+	if channelFunc, ok := pushers.Get("console"); !ok {
+		fmt.Errorf("Error get channel")
+		return
+	} else if channel, err := channelFunc(); err != nil {
+		fmt.Errorf("Error init channel")
+		return
+	} else {
+		ch = channel
+	}
+
+	bc := pushers.NewBusChannel()
+	bus := eventbus.New()
+	bus.Subscribe(bc)
+	bus.Subscribe(ch)
+	// init service
+	fn, ok := services.Get(h.Protocol)
+	if !ok {
+		fmt.Errorf(color.RedString("Could not find service %s", h.Protocol))
+		return
+	}
+	options := []services.ServicerFunc{
+		services.WithChannel(bus),
+	}
+	service := fn(options...)
+	// init listener
+	listenerFunc, ok := listener.Get("socket")
+	if !ok {
+		fmt.Errorf(color.RedString("Listener not support socket type"))
+		return
+	}
+
+	l, err := listenerFunc(
+		listener.WithChannel(bus),
+	)
+	if err != nil {
+		fmt.Errorf("Error init listener")
+		return
+	}
+
+	a, ok := l.(listener.AddAddresser)
+	if !ok {
+		fmt.Errorf("Listener error")
+		return
+	}
+	addr, _, _, err := ToAddr(fmt.Sprintf("tcp/%s", h.Port))
+	if err != nil {
+		fmt.Errorf("Error parsing port string: %s", err.Error())
+		return
+	}
+	if addr == nil {
+		fmt.Errorf("Failed to bind: addr is nil")
+		return
+	}
+	a.AddAddress(addr)
+
+	//start listen
+	ctx, cancel := context.WithCancel(context.Background())
+	if err := l.Start(ctx); err != nil {
+		fmt.Errorf(color.RedString("Error starting listener: %s", err.Error()))
+		return
+	}
+
+	incoming := make(chan net.Conn)
+	var conn net.Conn
+	go func() {
+		for {
+			conn, err = l.Accept()
+			if err != nil {
+				panic(err)
+			}
+
+			incoming <- conn
+
+			// in case of goroutine starvation
+			// with many connection and single procs
+			runtime.Gosched()
+		}
+	}()
+
+	go func() {
+		<-h.StopCh
+		cancel()
+		err := l.Stop()
+		if err != nil {
+			fmt.Errorf("close socker failed, err is %v", err)
+		}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case conn := <-incoming:
+			go service.Handle(ctx, conn)
+		}
+	}
+
+}
+
+// Addr, proto, port, error
+func ToAddr(input string) (net.Addr, string, int, error) {
+	parts := strings.Split(input, "/")
+
+	if len(parts) != 2 {
+		return nil, "", 0, fmt.Errorf("wrong format (needs to be \"protocol/(host:)port\")")
+	}
+
+	proto := parts[0]
+
+	host, port, err := net.SplitHostPort(parts[1])
+	if err != nil {
+		port = parts[1]
+	}
+
+	portUint16, err := strconv.ParseUint(port, 10, 16)
+	if err != nil {
+		return nil, "", 0, fmt.Errorf("error parsing port value: %s", err.Error())
+	}
+
+	switch proto {
+	case "tcp":
+		addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(host, port))
+		return addr, proto, int(portUint16), err
+	case "udp":
+		addr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(host, port))
+		return addr, proto, int(portUint16), err
+	default:
+		return nil, "", 0, fmt.Errorf("unknown protocol %s", proto)
+	}
 }

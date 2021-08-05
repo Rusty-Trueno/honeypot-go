@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"honeypot/conf"
 	"honeypot/core/pool"
-	"honeypot/core/transport/bypass"
+	"honeypot/core/pushers/bypass"
 	"honeypot/core/transport/kubeedge"
 	"honeypot/core/transport/mqtt"
 )

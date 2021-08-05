@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/color"
 	"honeypot/core/listener"
 	"honeypot/core/pushers"
+	bypass2 "honeypot/core/pushers/bypass"
 	"honeypot/core/pushers/eventbus"
 	"honeypot/core/services"
 	"honeypot/core/transport/mqtt"
@@ -24,15 +25,7 @@ import (
 	_ "honeypot/core/listener/socket"
 
 	_ "honeypot/core/pushers/console"
-	_ "honeypot/core/pushers/elasticsearch"
 	_ "honeypot/core/pushers/eventbus"
-	_ "honeypot/core/pushers/file"
-	_ "honeypot/core/pushers/kafka"
-	_ "honeypot/core/pushers/lumberjack"
-	_ "honeypot/core/pushers/marija"
-	_ "honeypot/core/pushers/rabbitmq"
-	_ "honeypot/core/pushers/slack"
-	_ "honeypot/core/pushers/splunk"
 
 	_ "honeypot/core/services/bannerfmt"
 	_ "honeypot/core/services/decoder"
@@ -257,21 +250,10 @@ func (h *Honeypot) syncProtocol(protocol string) error {
 
 func (h *Honeypot) launchPot() {
 	// init event bus
-	var ch pushers.Channel
-	if channelFunc, ok := pushers.Get("console"); !ok {
-		fmt.Errorf("Error get channel")
-		return
-	} else if channel, err := channelFunc(); err != nil {
-		fmt.Errorf("Error init channel")
-		return
-	} else {
-		ch = channel
-	}
-
 	bc := pushers.NewBusChannel()
 	bus := eventbus.New()
 	bus.Subscribe(bc)
-	bus.Subscribe(ch)
+	bus.Subscribe(bypass2.Bk)
 	// init service
 	fn, ok := services.Get(h.Protocol)
 	if !ok {

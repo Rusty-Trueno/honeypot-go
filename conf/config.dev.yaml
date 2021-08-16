@@ -1,5 +1,5 @@
 mqtt:
-  server: tcp://182.92.222.53:1883
+  server: tcp://iot-cloud-k8s:1883
   mode: 0
   downClientId: honeypotDown1
   upClientId: honeypotUp1

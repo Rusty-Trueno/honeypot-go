@@ -10,6 +10,7 @@ import (
 	"honeypot/core/pushers"
 	bypass2 "honeypot/core/pushers/bypass"
 	"honeypot/core/pushers/eventbus"
+	"honeypot/core/pushers/timeseries"
 	"honeypot/core/services"
 	"honeypot/core/transport/mqtt"
 	"honeypot/model"
@@ -26,6 +27,7 @@ import (
 
 	_ "honeypot/core/pushers/console"
 	_ "honeypot/core/pushers/eventbus"
+	_ "honeypot/core/pushers/timeseries"
 
 	_ "honeypot/core/services/bannerfmt"
 	_ "honeypot/core/services/decoder"
@@ -192,6 +194,7 @@ func (h *Honeypot) launchPot() {
 	bus := eventbus.New()
 	bus.Subscribe(bc)
 	bus.Subscribe(bypass2.Bk)
+	bus.Subscribe(timeseries.Bk)
 	// init service
 	fn, ok := services.Get(h.Protocol)
 	if !ok {

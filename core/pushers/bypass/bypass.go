@@ -62,7 +62,11 @@ func (b Backend) run() {
 			fmt.Errorf("json marshal failed, error is %v", err)
 		}
 		fmt.Printf("payload is %s", e)
-		if token := Client.Publish(edgeNode+constant.BypassPotMsg, 0, false, payload); token.Wait() && token.Error() != nil {
+		category, ok := e["category"]
+		if !ok {
+			fmt.Errorf("can't get category")
+		}
+		if token := Client.Publish(edgeNode+constant.BypassPotMsg+fmt.Sprintf("%v", category), 0, false, payload); token.Wait() && token.Error() != nil {
 			fmt.Errorf("publish pot msg failed, err is %v", token.Error())
 		}
 	}

@@ -75,14 +75,6 @@ func (h *Honeypot) start() {
 }
 
 func (h *Honeypot) Watch() {
-	err := h.updatePort(h.Port)
-	if err != nil {
-		fmt.Errorf("update port failed, err is %v", err)
-	}
-	err = h.syncProtocol(h.Protocol)
-	if err != nil {
-		fmt.Errorf("sync protocol failed, err is %v", err)
-	}
 	go h.watchPotStatus()
 	if h.Switch == "ON" {
 		h.start()
@@ -110,15 +102,6 @@ func (h *Honeypot) Watch() {
 				case "port":
 					if h.Port != v {
 						h.changeBindPort(v)
-					}
-					err := h.updatePort(v)
-					if err != nil {
-						fmt.Errorf("update port failed, err is %v", err)
-					}
-				case "protocol":
-					err := h.syncProtocol(v)
-					if err != nil {
-						fmt.Errorf("sync protocol failed, err is %v", err)
 					}
 				}
 			}
@@ -173,10 +156,7 @@ func (h *Honeypot) watchPotStatus() {
 					status = "ON"
 				}
 			}
-			err := h.updateSwitch(status)
-			if err != nil {
-				fmt.Errorf("update switch failed, err is %v", err)
-			}
+			fmt.Printf("status is %s\n", status)
 		case <-h.ctx.Done():
 			fmt.Println("stop watch pod status")
 			return
@@ -194,48 +174,6 @@ func (h *Honeypot) updateSwitch(status string) error {
 	updateDevice := model.DeviceTwinUpdate{
 		Twin: map[string]*model.MsgTwin{
 			"switch": &switchTwin,
-		},
-	}
-	payload, err := json.Marshal(updateDevice)
-	if err != nil {
-		return err
-	}
-	if token := mqtt.Client.Publish(constant.DeviceETPrefix+h.Name+constant.TwinETUpdateSuffix, 0, false, payload); token.Wait() && token.Error() != nil {
-		return err
-	}
-	return nil
-}
-
-func (h *Honeypot) updatePort(port string) error {
-	portTwin := model.MsgTwin{
-		Actual: &model.TwinValue{
-			Value: &port,
-		},
-	}
-	updateDevice := model.DeviceTwinUpdate{
-		Twin: map[string]*model.MsgTwin{
-			"port": &portTwin,
-		},
-	}
-	payload, err := json.Marshal(updateDevice)
-	if err != nil {
-		return err
-	}
-	if token := mqtt.Client.Publish(constant.DeviceETPrefix+h.Name+constant.TwinETUpdateSuffix, 0, false, payload); token.Wait() && token.Error() != nil {
-		return err
-	}
-	return nil
-}
-
-func (h *Honeypot) syncProtocol(protocol string) error {
-	protocolTwin := model.MsgTwin{
-		Actual: &model.TwinValue{
-			Value: &protocol,
-		},
-	}
-	updateDevice := model.DeviceTwinUpdate{
-		Twin: map[string]*model.MsgTwin{
-			"protocol": &protocolTwin,
 		},
 	}
 	payload, err := json.Marshal(updateDevice)

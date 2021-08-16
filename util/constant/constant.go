@@ -24,7 +24,7 @@ const (
 	ModelName                  = "honeypot"
 
 	//bypass topic
-	BypassPotMsg = "/honeypot/msg"
+	BypassPotMsg = "/honeypot/msg/"
 
 	//environment
 	Windows = "windows"

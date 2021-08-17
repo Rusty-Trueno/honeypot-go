@@ -15,7 +15,7 @@ var (
 
 func init() {
 	var err error
-	TdEngineDB, err = sql.Open("taossqlrestful", "root:taosdata@/http(iot-cloud-db-tdengine:6041)/test")
+	TdEngineDB, err = sql.Open("taossqlrestful", "root:taosdata@/http(iot-cloud-db-tdengine:6041)/edge")
 	if err != nil {
 		fmt.Errorf("open restful timeseries failed, error is %v\n", err)
 	}
@@ -50,7 +50,7 @@ func InsertPotData(potName, potData string) error {
 }
 
 func GetPotData() error {
-	rows, err := TdEngineDB.Query("select * from pot_redis")
+	rows, err := TdEngineDB.Query("select * from http")
 	if err != nil {
 		fmt.Errorf("query pot data failed, error is %v", err)
 	}

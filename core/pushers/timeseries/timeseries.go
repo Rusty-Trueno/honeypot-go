@@ -30,7 +30,7 @@ func (b Backend) run() {
 		if !ok {
 			fmt.Errorf("can't get category")
 		}
-		potName := fmt.Sprintf("pot_%s", category)
+		potName := fmt.Sprintf("%s", category)
 		dataType, _ := json.Marshal(e)
 		potData := string(dataType)
 		err := tdengine.InsertPotData(potName, potData)

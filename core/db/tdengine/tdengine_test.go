@@ -7,7 +7,7 @@ import (
 
 func TestInsertPotData(t *testing.T) {
 	//Start()
-	err := InsertPotData("pot_redis", "")
+	err := InsertPotData("redis", "")
 	if err != nil {
 		fmt.Errorf("insert pot data failed, error is %v", err)
 	}

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/fatih/color"
-	"honeypot/core/listener"
+	"github.com/op/go-logging"
 	"honeypot/core/pushers"
 	bypass2 "honeypot/core/pushers/bypass"
 	"honeypot/core/pushers/eventbus"
@@ -22,8 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	_ "honeypot/core/listener/socket"
 
 	_ "honeypot/core/pushers/console"
 	_ "honeypot/core/pushers/eventbus"
@@ -46,6 +44,8 @@ import (
 	_ "honeypot/core/services/telnet"
 	_ "honeypot/core/services/vnc"
 )
+
+var log = logging.MustGetLogger("honeypot")
 
 type Honeypot struct {
 	Name     string
@@ -142,19 +142,19 @@ func (h *Honeypot) watchPotStatus() {
 			if h.Env == constant.Windows {
 				if !windows.CheckPort(h.Port) {
 					// 如果端口不再监听了
-					fmt.Println("not listen")
+					fmt.Printf("%s -> not listen\n", h.Port)
 					status = "OFF"
 				} else {
-					fmt.Println("listening")
+					fmt.Printf("%s -> listening\n", h.Port)
 					status = "ON"
 				}
 			} else if h.Env == constant.Linux {
 				if !linux.CheckPort(h.Port) {
 					// 如果端口不再监听了
-					fmt.Println("not listen")
+					fmt.Printf("%s -> not listen\n", h.Port)
 					status = "OFF"
 				} else {
-					fmt.Println("listening")
+					fmt.Printf("%s -> listening\n", h.Port)
 					status = "ON"
 				}
 			}
@@ -205,26 +205,7 @@ func (h *Honeypot) launchPot() {
 		services.WithChannel(bus),
 	}
 	service := fn(options...)
-	// init listener
-	listenerFunc, ok := listener.Get("socket")
-	if !ok {
-		fmt.Errorf(color.RedString("Listener not support socket type"))
-		return
-	}
 
-	l, err := listenerFunc(
-		listener.WithChannel(bus),
-	)
-	if err != nil {
-		fmt.Errorf("Error init listener")
-		return
-	}
-
-	a, ok := l.(listener.AddAddresser)
-	if !ok {
-		fmt.Errorf("Listener error")
-		return
-	}
 	addr, _, _, err := ToAddr(fmt.Sprintf("tcp/%s", h.Port))
 	if err != nil {
 		fmt.Errorf("Error parsing port string: %s", err.Error())
@@ -234,23 +215,37 @@ func (h *Honeypot) launchPot() {
 		fmt.Errorf("Failed to bind: addr is nil")
 		return
 	}
-	a.AddAddress(addr)
 
-	//start listen
+	////start listen
 	ctx, cancel := context.WithCancel(context.Background())
-	if err := l.Start(ctx); err != nil {
-		fmt.Errorf(color.RedString("Error starting listener: %s", err.Error()))
+
+	l, err := net.Listen(addr.Network(), addr.String())
+	if err != nil {
+		fmt.Println(color.RedString("Error starting listener: %s", err.Error()))
 		return
 	}
+
+	log.Infof("Listener started: tcp/%s", addr)
+
+	ch := make(chan net.Conn)
+
+	go func() {
+		for {
+			c, err := l.Accept()
+			if err != nil {
+				log.Errorf("Error accepting connection: %s", err.Error())
+				break
+			}
+
+			ch <- c
+		}
+	}()
 
 	incoming := make(chan net.Conn)
 	var conn net.Conn
 	go func() {
 		for {
-			conn, err = l.Accept()
-			if err != nil {
-				panic(err)
-			}
+			conn = <-ch
 
 			incoming <- conn
 
@@ -263,7 +258,7 @@ func (h *Honeypot) launchPot() {
 	go func() {
 		<-h.StopCh
 		cancel()
-		err := l.Stop()
+		err := l.Close()
 		if err != nil {
 			fmt.Errorf("close socker failed, err is %v", err)
 		}

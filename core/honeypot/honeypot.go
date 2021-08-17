@@ -56,6 +56,7 @@ type Honeypot struct {
 	Protocol string
 	Switch   string
 	Env      string
+	l        net.Listener
 }
 
 func NewPot(Name, Port, Protocol, Switch, Env string) *Honeypot {
@@ -100,6 +101,7 @@ func (h *Honeypot) Watch() {
 						} else if v == "OFF" {
 							h.stop()
 						}
+						h.Switch = v
 					}
 				case "port":
 					if h.Port != v {
@@ -116,14 +118,15 @@ func (h *Honeypot) Watch() {
 }
 
 func (h *Honeypot) UnWatch() {
-	if h.Switch == "ON" {
-		h.stop()
-	}
-	h.cancel()
+	h.stop()
 }
 
 func (h *Honeypot) stop() {
-	h.StopCh <- true
+	err := h.l.Close()
+	if err != nil {
+		fmt.Errorf("close socker failed, err is %v", err)
+	}
+	h.cancel()
 }
 
 func (h *Honeypot) changeBindPort(newPort string) {
@@ -189,6 +192,7 @@ func (h *Honeypot) updateSwitch(status string) error {
 }
 
 func (h *Honeypot) launchPot() {
+	log.Infof("launching pot.......\n")
 	// init event bus
 	bc := pushers.NewBusChannel()
 	bus := eventbus.New()
@@ -216,10 +220,8 @@ func (h *Honeypot) launchPot() {
 		return
 	}
 
-	////start listen
-	ctx, cancel := context.WithCancel(context.Background())
-
-	l, err := net.Listen(addr.Network(), addr.String())
+	//start listen
+	h.l, err = net.Listen(addr.Network(), addr.String())
 	if err != nil {
 		fmt.Println(color.RedString("Error starting listener: %s", err.Error()))
 		return
@@ -231,7 +233,7 @@ func (h *Honeypot) launchPot() {
 
 	go func() {
 		for {
-			c, err := l.Accept()
+			c, err := h.l.Accept()
 			if err != nil {
 				log.Errorf("Error accepting connection: %s", err.Error())
 				break
@@ -245,31 +247,24 @@ func (h *Honeypot) launchPot() {
 	var conn net.Conn
 	go func() {
 		for {
-			conn = <-ch
-
-			incoming <- conn
-
-			// in case of goroutine starvation
-			// with many connection and single procs
-			runtime.Gosched()
-		}
-	}()
-
-	go func() {
-		<-h.StopCh
-		cancel()
-		err := l.Close()
-		if err != nil {
-			fmt.Errorf("close socker failed, err is %v", err)
+			select {
+			case conn = <-ch:
+				incoming <- conn
+				// in case of goroutine starvation
+				// with many connection and single procs
+				runtime.Gosched()
+			case <-h.ctx.Done():
+				return
+			}
 		}
 	}()
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-h.ctx.Done():
 			return
 		case conn := <-incoming:
-			go service.Handle(ctx, conn)
+			go service.Handle(h.ctx, conn)
 		}
 	}
 

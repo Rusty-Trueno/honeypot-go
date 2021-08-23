@@ -13,12 +13,13 @@ var (
 	TdEngineDB *sql.DB
 )
 
-func init() {
+func Setup(node string) error {
 	var err error
-	TdEngineDB, err = sql.Open("taossqlrestful", "root:taosdata@/http(iot-cloud-db-tdengine:6041)/edge")
+	TdEngineDB, err = sql.Open("taossqlrestful", fmt.Sprintf("root:taosdata@/http(iot-cloud-db-tdengine:6041)/%s", node))
 	if err != nil {
 		fmt.Errorf("open restful timeseries failed, error is %v\n", err)
 	}
+	return nil
 }
 
 func InsertPotData(potName, potData string) error {

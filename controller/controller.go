@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"honeypot/conf"
+	"honeypot/core/db/tdengine"
 	"honeypot/core/pool"
 	"honeypot/core/pushers/bypass"
 	"honeypot/core/pushers/timeseries"
@@ -15,7 +16,11 @@ func Run(node, env string) {
 	wg, poolX := pool.New(1)
 	defer poolX.Release()
 	wg.Add(1)
-	err := mqtt.InitMqttClient(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.DownClientId, "", "")
+	err := tdengine.Setup(node)
+	if err != nil {
+		fmt.Errorf("init tdengine failed, error is %v", err)
+	}
+	err = mqtt.InitMqttClient(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.DownClientId, "", "")
 	if err != nil {
 		fmt.Errorf("init mqtt client failed, err is %v", err)
 	}

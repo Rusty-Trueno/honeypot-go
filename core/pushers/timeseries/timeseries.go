@@ -37,6 +37,10 @@ func (b Backend) run() {
 		if err != nil {
 			fmt.Errorf("insert pot data to tdengine failed, error is %v", err)
 		}
+		err = tdengine.InsertAlarmData(potName, potData)
+		if err != nil {
+			fmt.Errorf("insert alarm data to tdengine failed, error is %v", err)
+		}
 	}
 }
 

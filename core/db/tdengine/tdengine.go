@@ -49,6 +49,34 @@ func InsertPotData(potName, potData string) error {
 	return nil
 }
 
+func InsertAlarmData(potName, potData string) error {
+	stms, err := TdEngineDB.Prepare(fmt.Sprintf("insert into honeypot.alarm(ts, protocol, value) values(?,?,?)"))
+	if err != nil {
+		fmt.Printf("prepare insert sql failed, error is %v\n", err)
+		return err
+	}
+
+	rs, err := stms.Exec(time.Now(), potName, potData)
+	if err != nil {
+		fmt.Printf("insert data failed, error is %v\n", err)
+	}
+
+	//我们可以获得插入的id
+	id, err := rs.LastInsertId()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(id)
+	//可以获得影响行数
+	affect, err := rs.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(affect)
+
+	return nil
+}
+
 func GetPotData() error {
 	rows, err := TdEngineDB.Query("select * from http")
 	if err != nil {

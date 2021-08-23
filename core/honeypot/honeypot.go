@@ -122,9 +122,11 @@ func (h *Honeypot) UnWatch() {
 }
 
 func (h *Honeypot) stop() {
-	err := h.l.Close()
-	if err != nil {
-		fmt.Errorf("close socker failed, err is %v", err)
+	if h.l != nil {
+		err := h.l.Close()
+		if err != nil {
+			fmt.Errorf("close socker failed, err is %v", err)
+		}
 	}
 	h.cancel()
 }

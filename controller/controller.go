@@ -7,6 +7,7 @@ import (
 	"honeypot/core/pool"
 	"honeypot/core/pushers/bypass"
 	"honeypot/core/pushers/timeseries"
+	"honeypot/core/storage"
 	"honeypot/core/transport/kubeedge"
 	"honeypot/core/transport/mqtt"
 )
@@ -20,6 +21,7 @@ func Run(node, env string) {
 	if err != nil {
 		fmt.Errorf("init tdengine failed, error is %v", err)
 	}
+	storage.SetDataDir("./")
 	err = mqtt.InitMqttClient(conf.GetConfig().Mqtt.Server, conf.GetConfig().Mqtt.DownClientId, "", "")
 	if err != nil {
 		fmt.Errorf("init mqtt client failed, err is %v", err)
